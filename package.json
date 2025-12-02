@@ -1,0 +1,22 @@
+{
+  "name": "@ventrue/recursive-require",
+  "version": "1.0.0",
+  "description": "A runtime recursive require",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VentrueTech/recursive-require.git"
+  },
+  "author": "danilo-drs",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/VentrueTech/recursive-require/issues"
+  },
+  "homepage": "https://github.com/VentrueTech/recursive-require#readme",
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
+}

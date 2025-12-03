@@ -7,8 +7,10 @@
 const fs = require('fs');
 const path = require('path');
 
-// Export a function that takes a basePath as a parameter
-module.exports = (basePath) => {
+// Exporta função principal, agora aceita basePath e options
+module.exports = (basePath, options = {}) => {
+  // Define modo de operação
+  const mode = options.mode || 'none';
   // Define regular expressions to match the directory and folder name patterns
   const directoryPattern = new RegExp(`${basePath}/?`);
   const folderNamePattern = new RegExp('.*/([^/]+)/?$');
@@ -19,24 +21,73 @@ module.exports = (basePath) => {
   function recursive(dir = basePath) {
     // Read the contents of the directory
     fs.readdirSync(dir).forEach((file) => {
-      // Join the directory and file name to get the full path
       const fullDir = path.join(dir, file);
-      // Get the stats object for the file or directory
       const statsObj = fs.statSync(fullDir);
-      // If the item is a directory, call the recursive function with the full path
       if (statsObj.isDirectory()) return recursive(fullDir);
-      // Get the property name by replacing the directory pattern or folder name pattern in the directory path
       const propName =
         basePath !== dir ? dir.replace(directoryPattern, '') : dir.replace(folderNamePattern, '$1');
-      // Add the file to the result object under the appropriate property name
-      result[propName] = {
-        ...result[propName],
-        ...{
-          [file.replace(/(.*)(\..*)/, '$1')]: require(fullDir),
-        },
-      };
 
-      return null;
+      // --- Modos de validação ---
+      if (mode === 'none') {
+        // Legacy: importa sem validação
+        result[propName] = {
+          ...result[propName],
+          ...{
+            [file.replace(/(.*)(\..*)/, '$1')]: require(fullDir),
+          },
+        };
+        return null;
+      }
+      if (mode === 'manifest-checksum' || mode === 'signed-manifest') {
+        // Valida manifest e checksums
+        const manifest = options.manifest;
+        if (!manifest || !manifest.files) {
+          throw new Error('Manifest inválido ou ausente para modo manifest-checksum/signed-manifest');
+        }
+        // Se modo signed-manifest, valida assinatura do manifest
+        if (mode === 'signed-manifest') {
+          const signature = options.signature;
+          const publicKey = options.publicKey;
+          if (!signature || !publicKey) {
+            throw new Error('Assinatura ou chave pública ausente para modo signed-manifest');
+          }
+          // Valida assinatura Ed25519 do manifest
+          const crypto = require('crypto');
+          const manifestBuffer = Buffer.from(JSON.stringify(manifest));
+          const isValid = crypto.verify(
+            null,
+            manifestBuffer,
+            {
+              key: publicKey,
+              format: 'pem',
+            },
+            signature
+          );
+          if (!isValid) {
+            throw new Error('Assinatura do manifest inválida');
+          }
+        }
+        // Valida checksum do arquivo
+        const rel = path.relative(basePath, fullDir).split(path.sep).join('/');
+        const expectedHash = manifest.files[rel];
+        if (!expectedHash) {
+          throw new Error(`Checksum ausente no manifest para ${rel}`);
+        }
+        const data = fs.readFileSync(fullDir);
+        const actualHash = require('crypto').createHash('sha256').update(data).digest('hex');
+        if (actualHash !== expectedHash) {
+          throw new Error(`Checksum inválido para ${rel}`);
+        }
+        result[propName] = {
+          ...result[propName],
+          ...{
+            [file.replace(/(.*)(\..*)/, '$1')]: require(fullDir),
+          },
+        };
+        return null;
+      }
+      // Outros modos: lógica de validação será implementada depois
+      throw new Error(`Modo de validação '${mode}' não implementado ainda.`);
     });
   }
   // Call the recursive function with the basePath

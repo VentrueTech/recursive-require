@@ -18,7 +18,7 @@ describe('manifest-checksum mode', () => {
   });
 
   it('falha se checksum inválido', () => {
-    // corrompe manifest
+    // corrupt manifest
     const badManifest = JSON.parse(JSON.stringify(manifest));
     const file = Object.keys(badManifest.files)[0];
     badManifest.files[file] = 'deadbeef';

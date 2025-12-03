@@ -44,6 +44,27 @@ const tree = loadTree('/caminho/base', {
 });
 ```
 
+## Scripts npm com argumentos dinâmicos
+
+Os scripts padrões delegam para os arquivos em `scripts/` e aceitam argumentos passados após `--`.
+
+- Gerar manifest (dinâmico):
+```bash
+npm run stripc:create-manifest -- ./tests/fixtures ./manifest.json
+```
+
+- Assinar manifest (dinâmico):
+```bash
+npm run stripc:sign-manifest -- ./ed25519.key ./manifest.json ./manifest.sig
+```
+
+- Helper que gera e assina (script auxiliar):
+```bash
+npm run stripc:generate-and-sign -- ./tests/fixtures ./manifest.json ./ed25519.key ./manifest.sig
+```
+
+O script `generate-and-sign` executa a geração do manifest e, em seguida, chama o wrapper de assinatura.
+
 ## Testes
 Execute:
 ```bash

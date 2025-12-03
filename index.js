@@ -1,15 +1,15 @@
-/* 
-  Este código exporta uma função que lê recursivamente o conteúdo de um diretório base e 
-  retorna um objeto com os arquivos organizados por propriedades correspondentes aos nomes dos diretórios.
- */
+/*
+  This module exports a function that recursively reads the contents of a base directory
+  and returns an object with files organized as properties corresponding to directory names.
+*/
 
 // Import the fs and path modules
 const fs = require('fs');
 const path = require('path');
 
-// Exporta função principal, agora aceita basePath e options
+// Export main function, now accepts basePath and options
 module.exports = (basePath, options = {}) => {
-  // Define modo de operação
+  // Set operation mode
   const mode = options.mode || 'none';
   // Define regular expressions to match the directory and folder name patterns
   const directoryPattern = new RegExp(`${basePath}/?`);
@@ -18,7 +18,8 @@ module.exports = (basePath, options = {}) => {
   const result = {};
 
   // Define a recursive function to read the contents of a directory
-  function recursive(dir = basePath) {
+  function recursive(dir) {
+    if (typeof dir === 'undefined') dir = basePath;
     // Read the contents of the directory
     fs.readdirSync(dir).forEach((file) => {
       const fullDir = path.join(dir, file);
@@ -27,9 +28,9 @@ module.exports = (basePath, options = {}) => {
       const propName =
         basePath !== dir ? dir.replace(directoryPattern, '') : dir.replace(folderNamePattern, '$1');
 
-      // --- Modos de validação ---
+      // --- Validation modes ---
       if (mode === 'none') {
-        // Legacy: importa sem validação
+        // Legacy: import without validation
         result[propName] = {
           ...result[propName],
           ...{
@@ -39,19 +40,19 @@ module.exports = (basePath, options = {}) => {
         return null;
       }
       if (mode === 'manifest-checksum' || mode === 'signed-manifest') {
-        // Valida manifest e checksums
+        // Validate manifest and checksums
         const manifest = options.manifest;
         if (!manifest || !manifest.files) {
           throw new Error('Manifest inválido ou ausente para modo manifest-checksum/signed-manifest');
         }
-        // Se modo signed-manifest, valida assinatura do manifest
+        // If mode is 'signed-manifest', validate manifest signature
         if (mode === 'signed-manifest') {
           const signature = options.signature;
           const publicKey = options.publicKey;
           if (!signature || !publicKey) {
             throw new Error('Assinatura ou chave pública ausente para modo signed-manifest');
           }
-          // Valida assinatura Ed25519 do manifest
+          // Validate manifest Ed25519 signature
           const crypto = require('crypto');
           const manifestBuffer = Buffer.from(JSON.stringify(manifest));
           const isValid = crypto.verify(
@@ -67,7 +68,7 @@ module.exports = (basePath, options = {}) => {
             throw new Error('Assinatura do manifest inválida');
           }
         }
-        // Valida checksum do arquivo
+        // Validate file checksum
         const rel = path.relative(basePath, fullDir).split(path.sep).join('/');
         const expectedHash = manifest.files[rel];
         if (!expectedHash) {
@@ -86,19 +87,23 @@ module.exports = (basePath, options = {}) => {
         };
         return null;
       }
-      // Outros modos: lógica de validação será implementada depois
+      // Other modes: validation logic to be implemented later
       throw new Error(`Modo de validação '${mode}' não implementado ainda.`);
     });
   }
-  // Call the recursive function with the basePath
-  recursive(basePath);
+  // Call the recursive function with no argument so the function's internal defaulting runs
+  recursive();
    
-  const rootName = basePath.replace(folderNamePattern, '$1');
-  // Merge root directory files into the top-level object
-  const rootObj =  {...result.hasOwnProperty(rootName) ? result[rootName] : {}};
+    const rootName = basePath.replace(folderNamePattern, '$1');
+    // Merge root directory files into the top-level object
+    let rootObj;
+    if (result.hasOwnProperty(rootName)) {
+      rootObj = { ...result[rootName] };
+    } else {
+      rootObj = {};
+    }
   // Remove the root directory property from the result
   delete result[rootName];
   // Return the final result object
-  const xpto = { ...rootObj, ...result };
   return { ...rootObj, ...result };
  };

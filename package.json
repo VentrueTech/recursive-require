@@ -6,7 +6,10 @@
   "scripts": {
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "stripc:create-manifest": "node scripts/generate-manifest.js",
+    "stripc:sign-manifest": "node scripts/sign-manifest.js",
+    "stripc:generate-and-sign": "node scripts/generate-and-sign.js"
   },
   "repository": {
     "type": "git",

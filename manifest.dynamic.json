@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "hashAlgo": "sha256",
+  "generatedAt": "2025-12-03T13:20:20.973Z",
+  "files": {
+    "fixturesFn.js": "e7785455971839f2c9249cf98367c8954dba0db219be69c927a230d40b159b71",
+    "subdir/subdirFn.js": "580eea608e76ce54012944d9dc2785ae16f6575ac8ce1621ca28b4f967f5fa59"
+  }
+}

@@ -1,5 +1,5 @@
-// Gera manifest.json com checksums SHA-256 dos arquivos .js sob basePath
-// Opcionalmente assina o manifest usando chave privada Ed25519 (openssl)
+// Generate manifest.json with SHA-256 checksums for .js files under basePath
+// Optionally sign the manifest using an Ed25519 private key (OpenSSL)
 
 const fs = require('fs');
 const path = require('path');
@@ -43,12 +43,16 @@ function makeManifest(basePath) {
 }
 
 // CLI usage: node generate-manifest.js <basePath> [manifestPath]
-if (require.main === module) {
-  const basePath = process.argv[2] || '.';
-  const manifestPath = process.argv[3] || 'manifest.json';
+function runCli(argv) {
+  const basePath = argv[2] || '.';
+  const manifestPath = argv[3] || 'manifest.json';
   const manifest = makeManifest(basePath);
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  // returns path for easier testing
   console.log(`Manifest gerado: ${manifestPath}`);
+  return manifestPath;
 }
 
-module.exports = { makeManifest };
+// Note: CLI entrypoint uses exported `runCli` so callers can invoke it explicitly.
+
+module.exports = { makeManifest, runCli };

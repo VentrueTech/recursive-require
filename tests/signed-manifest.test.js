@@ -10,7 +10,7 @@ describe('signed-manifest mode', () => {
 
   beforeAll(() => {
     manifest = makeManifest(basePath);
-    // Gera par de chaves Ed25519 para teste
+    // Generate Ed25519 key pair for test
     const { publicKey: pub, privateKey: priv } = crypto.generateKeyPairSync('ed25519');
     publicKey = pub.export({ type: 'spki', format: 'pem' });
     const manifestBuffer = Buffer.from(JSON.stringify(manifest));
@@ -30,7 +30,7 @@ describe('signed-manifest mode', () => {
 
   it('falha se assinatura inválida', () => {
     const badSignature = Buffer.from(signature);
-    badSignature[0] ^= 0xff; // corrompe assinatura
+    badSignature[0] ^= 0xff; // corrupt signature
     expect(() => loadTree(basePath, {
       mode: 'signed-manifest',
       manifest,
